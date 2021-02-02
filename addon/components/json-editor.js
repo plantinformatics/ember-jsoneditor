@@ -80,6 +80,11 @@ export default Component.extend({
       // assign internal error function to jsoneditor onError
       options['onError'] = bind(this, this._error);
 
+      // Can also make all fields read-only via param mode="view"
+      if (this.attrs.onEditable) {
+        options['onEditable'] = this.attrs.onEditable;
+      }
+
       // set nodes if none passed in
       const modes = ['tree', 'view', 'form', 'text', 'code'];
       options.modes = options.modes ? options.modes : modes;
@@ -146,8 +151,9 @@ export default Component.extend({
       this.set('_updating', false);
 
       // Trigger Change event
-      if (this.change) {
-        this.change();
+      let onChange = this.attrs.onChange;
+      if (onChange) {
+        onChange();
       }
     } catch (error) {
       this._error(error);
@@ -195,12 +201,16 @@ export default Component.extend({
   /**
   JSON did change
   */
-  jsonDidChange: observer('json', function() {
+  jsonDidChange: function() {
     if (!this._updating) {
       let json = this.json;
       this.editor.set(json);
     }
-  }),
+  },
+  /* jsonDidChange() was observer('json', ) but in Ember 3, for each input
+   * character typed, that causes a call to treemode.set() which Resets the
+   * state of the editor, losing focus.
+   */
 
   /**
   Mode did change
